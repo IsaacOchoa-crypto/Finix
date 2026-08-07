@@ -27,7 +27,7 @@ export const PrivacyNotice = () => {
           <strong>Aviso de Privacidad (Cumplimiento LFPDPPP / GDPR):</strong> Utilizamos cookies y 
           tecnologías similares para proteger tus datos financieros y ofrecerte una experiencia segura. 
           Al continuar navegando, aceptas nuestra directiva de tratamiento de datos personales. 
-          <a href="#" className="text-blue-400 hover:underline ml-1">Ver políticas completas.</a>
+          <a href="/docs/politica-privacidad.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline ml-1">Ver políticas completas.</a>
         </p>
       </div>
       
