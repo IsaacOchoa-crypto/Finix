@@ -11,11 +11,7 @@ const __dirname = dirname(__filename)
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true,
-    https: {
-      key: fs.readFileSync(resolve(__dirname, '../certbot/conf/nginx-selfsigned.key')),
-      cert: fs.readFileSync(resolve(__dirname, '../certbot/conf/nginx-selfsigned.crt')),
-    }
+    host: true
   },
   test: {
     globals: true,
