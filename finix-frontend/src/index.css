@@ -1,0 +1,54 @@
+/* 1. Importar la fuente PRIMERO */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+/* 2. Directivas de Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 3. Estilos Globales */
+body {
+  @apply bg-finix-dark text-white;
+  /* Aplicamos la fuente aquí directamente */
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Opcional: Para asegurar que las barras de scroll se vean bien en modo oscuro */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #1f2937; 
+}
+::-webkit-scrollbar-thumb {
+  background: #4b5563; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af; 
+}
+
+/* --- SCROLLBAR PERSONALIZADO --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050505; /* Fondo oscuro */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333; /* Color de la barra */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Color al pasar el mouse */
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #333 #050505;
+}
