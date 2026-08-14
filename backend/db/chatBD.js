@@ -37,9 +37,31 @@ const consultarAsesorIA = async (req, res) => {
         }
 
         const userData = docUser.data();
-
         const saldo = userData?.resumen_financiero?.saldo_actual || 0;
         const nombre = userData?.perfil?.nombre || "Usuario";
+
+        // Obtener historial de transacciones para la IA
+        const snapshotTx = await db.collection('transacciones')
+            .where('uid', '==', usuarioId)
+            .orderBy('fecha', 'desc')
+            .limit(30)
+            .get();
+        
+        let transaccionesTexto = "No hay transacciones recientes.";
+        if (!snapshotTx.empty) {
+            transaccionesTexto = snapshotTx.docs.map(doc => {
+                const data = doc.data();
+                const tipo = data.tipo === 'ingreso' ? '+' : '-';
+                let fecha = '';
+                if (data.fecha && typeof data.fecha.toDate === 'function') {
+                    fecha = data.fecha.toDate().toLocaleDateString('es-MX');
+                } else {
+                    fecha = String(data.fecha).split('T')[0];
+                }
+                const categoria = data.categoria?.nombre || 'General';
+                return `[${fecha}] ${categoria}: ${tipo}$${data.monto}`;
+            }).join('\n');
+        }
 
         // 🔹 Modelo actualizado de Gemini
         const model = genAI.getGenerativeModel({
@@ -55,11 +77,14 @@ Información del usuario:
 Nombre: ${nombre}
 Saldo actual: $${saldo}
 
+Últimas transacciones:
+${transaccionesTexto}
+
 Reglas:
 - Responde en español
 - Sé claro y breve
 - Da consejos financieros simples
-- Usa el saldo del usuario para responder si la pregunta es sobre dinero
+- Usa el saldo y las transacciones del usuario para responder preguntas sobre en qué ha gastado o cuánto dinero tiene.
 
 Pregunta del usuario:
 ${pregunta}

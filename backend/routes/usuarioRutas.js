@@ -199,8 +199,7 @@ router.post("/chat", async (req, res) => {
         
         req.usuario = {
             ...usuarioDetectado,
-            // 🛠️ FORZAMOS TU ID DE FIRESTORE PARA LA PRUEBA
-            id: usuarioDetectado.id || usuarioDetectado.uid || auth.id || "5XrOy7hM9GDxGxpx47qm" 
+            id: usuarioDetectado.id || usuarioDetectado.uid || auth.id
         };
 
         if (!req.usuario.id) {
