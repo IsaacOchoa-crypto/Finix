@@ -65,7 +65,7 @@ const consultarAsesorIA = async (req, res) => {
 
         // 🔹 Modelo actualizado de Gemini
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash"
+            model: "gemini-flash-lite-latest"
         });
 
         console.log(`Conectando con Gemini para el usuario: ${nombre}...`);
