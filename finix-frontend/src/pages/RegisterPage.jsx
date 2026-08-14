@@ -187,8 +187,9 @@ const RegisterPage = () => {
           </div>
         </div>
 
-        <button type="submit" disabled={loading} className="w-full mt-4 py-3.5 rounded-xl font-bold text-white bg-finix-orange hover:bg-orange-500 shadow-lg shadow-orange-500/30 flex justify-center gap-2 disabled:opacity-50">
-          {loading ? 'Procesando...' : <><Sparkles size={20}/> Registrarme</>}
+        <button type="submit" disabled={loading} className="w-full mt-4 py-3.5 rounded-xl font-bold text-white bg-finix-orange hover:bg-orange-500 shadow-lg shadow-orange-500/30 flex justify-center items-center gap-2 disabled:opacity-50">
+          {!loading && <Sparkles size={20}/>}
+          <span>{loading ? 'Procesando...' : 'Registrarme'}</span>
         </button>
       </form>
     </AuthSplitLayout>
