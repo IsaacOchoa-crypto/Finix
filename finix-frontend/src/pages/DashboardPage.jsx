@@ -161,7 +161,7 @@ const DashboardPage = () => {
   const dropdownStyle = "absolute top-14 right-0 w-80 bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200";
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden">
+    <div className="min-h-screen w-full relative overflow-hidden" translate="no">
       
       {/* CAPA DE FONDO INTERACTIVA */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
