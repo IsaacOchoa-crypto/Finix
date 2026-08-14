@@ -63,6 +63,16 @@ const consultarAsesorIA = async (req, res) => {
             }).join('\n');
         }
 
+        // Obtener metas financieras para la IA
+        const snapshotMetas = await db.collection('metas').where('uid', '==', usuarioId).get();
+        let metasTexto = "No tiene metas registradas.";
+        if (!snapshotMetas.empty) {
+            metasTexto = snapshotMetas.docs.map(doc => {
+                const data = doc.data();
+                return `- Meta: ${data.name || 'Sin nombre'}, Objetivo: $${data.target || 0}, Ahorrado: $${data.saved || 0}`;
+            }).join('\n');
+        }
+
         // 🔹 Modelo actualizado de Gemini
         const model = genAI.getGenerativeModel({
             model: "gemini-flash-lite-latest"
@@ -77,6 +87,9 @@ Información del usuario:
 Nombre: ${nombre}
 Saldo actual: $${saldo}
 
+Metas Financieras del usuario:
+${metasTexto}
+
 Últimas transacciones:
 ${transaccionesTexto}
 
@@ -84,7 +97,7 @@ Reglas:
 - Responde en español
 - Sé claro y breve
 - Da consejos financieros simples
-- Usa el saldo y las transacciones del usuario para responder preguntas sobre en qué ha gastado o cuánto dinero tiene.
+- Usa el saldo, las transacciones y las metas del usuario para dar contexto a tus respuestas.
 
 Pregunta del usuario:
 ${pregunta}
