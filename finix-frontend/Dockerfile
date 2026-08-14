@@ -6,6 +6,7 @@ RUN npm ci
 COPY . .
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # Fase 2: Servidor Web (Nginx)
