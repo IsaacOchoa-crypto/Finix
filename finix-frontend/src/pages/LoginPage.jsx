@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { User, Lock, ArrowRight } from 'lucide-react'; // Cambiamos Mail por User
+import { User, Lock, ArrowRight } from 'lucide-react'; 
 import AuthSplitLayout from '../components/layout/AuthSplitLayout';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { auth } from '../firebase/config';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(false);
-  // Cambiamos 'email' por 'identifier' para que sea genérico
   const [identifier, setIdentifier] = useState(''); 
   const [password, setPassword] = useState('');
 
@@ -21,12 +22,17 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
+      // 1. Iniciar sesión con Firebase usando Email y Contraseña
+      const userCredential = await signInWithEmailAndPassword(auth, identifier, password);
+      
+      // 2. Si es exitoso, obtener el UID de Firebase y enviarlo a nuestro backend
+      const firebase_uid = userCredential.user.uid;
+
       const respuesta = await api.post('/inicioSesion', {
-        usuario: identifier, 
-        password
+        firebase_uid
       });
 
-      const userRol = respuesta.data.rol?.toLowerCase();
+      const userRol = respuesta.data.usuario?.tipoUsuario?.toLowerCase() || respuesta.data.rol?.toLowerCase();
       
       // Guardamos en el contexto
       loginAction(respuesta.data.usuario, respuesta.data.rol);
@@ -43,7 +49,17 @@ const LoginPage = () => {
 
     } catch (error) {
       console.error("Error login:", error);
-      const mensaje = error.response?.data?.mensaje || "Credenciales incorrectas";
+      let mensaje = "Credenciales incorrectas";
+      
+      // Manejar errores de Firebase
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        mensaje = "El correo o la contraseña son incorrectos.";
+      } else if (error.code === 'auth/invalid-email') {
+        mensaje = "El correo electrónico no es válido.";
+      } else if (error.response?.data?.mensaje) {
+        mensaje = error.response.data.mensaje; // Mensaje de nuestro backend
+      }
+
       toast.error(mensaje);
       setLoading(false);
     }
