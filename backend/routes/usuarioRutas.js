@@ -195,7 +195,7 @@ router.post("/chat", async (req, res) => {
 
         if (auth.status !== 200) return res.status(auth.status).json(auth);
 
-        const usuarioDetectado = auth.usuario || auth.datos || auth;
+        const usuarioDetectado = auth.token || auth.usuario || auth.datos || auth;
         
         req.usuario = {
             ...usuarioDetectado,
