@@ -299,21 +299,21 @@ const DashboardPage = () => {
                <div className="flex justify-between mb-4"><div className="p-3 bg-blue-500/20 rounded-lg text-blue-400"><Wallet size={24} /></div></div>
                <p className="text-gray-400 text-sm">Saldo Total</p>
                <h3 className="text-3xl font-bold text-white">
-                 {loading ? "..." : `$${financialSummary.saldo.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}
+                 <span>{loading ? "..." : `$${financialSummary.saldo.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}</span>
                </h3>
             </div>
             <div className={liquidCardStyle}>
                <div className="flex justify-between mb-4"><div className="p-3 bg-green-500/20 rounded-lg text-green-400"><TrendingUp size={24} /></div></div>
                <p className="text-gray-400 text-sm">Ingresos Mes</p>
                <h3 className="text-3xl font-bold text-white">
-                 {loading ? "..." : `$${financialSummary.ingresosMes.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}
+                 <span>{loading ? "..." : `$${financialSummary.ingresosMes.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}</span>
                </h3>
             </div>
             <div className={liquidCardStyle}>
                <div className="flex justify-between mb-4"><div className="p-3 bg-red-500/20 rounded-lg text-red-400"><TrendingDown size={24} /></div></div>
                <p className="text-gray-400 text-sm">Gastos Mes</p>
                <h3 className="text-3xl font-bold text-white">
-                 {loading ? "..." : `$${financialSummary.gastosMes.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}
+                 <span>{loading ? "..." : `$${financialSummary.gastosMes.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}</span>
                </h3>
             </div>
           </div>
