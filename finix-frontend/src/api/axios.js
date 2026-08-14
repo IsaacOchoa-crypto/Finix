@@ -1,9 +1,12 @@
 // src/api/axios.js
 import axios from 'axios';
 
+const isDevelopment = import.meta.env.MODE === 'development';
+
 const clienteAxios = axios.create({
-    // Agregamos el puerto :3000 que es donde escucha tu Express
-    baseURL: 'http://localhost:3000/api', 
+    // Si estamos en desarrollo local (Vite), apuntamos a localhost:3000
+    // Si estamos en producción (AWS), usamos /api para que Nginx lo redirija
+    baseURL: isDevelopment ? 'http://localhost:3000/api' : '/api', 
     
     // ESTO ES IMPORTANTE:
     // Permite que las cookies (JWT) se envíen y reciban entre frontend y backend
