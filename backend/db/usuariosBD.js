@@ -50,7 +50,7 @@ const login = async (datos) => {
         return {
             status: 200,
             mensajeUsuario: "Login exitoso",
-            token: "firebase-token-handled-by-client", // El frontend ya tiene el token de Firebase
+            token: datos.firebase_token || "firebase-token-handled-by-client", 
             usuario: {
                 uid: doc.id,
                 nombre: usuarioData.perfil?.nombre,

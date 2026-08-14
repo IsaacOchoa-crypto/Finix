@@ -25,11 +25,13 @@ const LoginPage = () => {
       // 1. Iniciar sesión con Firebase usando Email y Contraseña
       const userCredential = await signInWithEmailAndPassword(auth, identifier, password);
       
-      // 2. Si es exitoso, obtener el UID de Firebase y enviarlo a nuestro backend
+      // 2. Si es exitoso, obtener el UID y Token de Firebase y enviarlo a nuestro backend
       const firebase_uid = userCredential.user.uid;
+      const firebase_token = await userCredential.user.getIdToken();
 
       const respuesta = await api.post('/inicioSesion', {
-        firebase_uid
+        firebase_uid,
+        firebase_token
       });
 
       const userRol = respuesta.data.usuario?.tipoUsuario?.toLowerCase() || respuesta.data.rol?.toLowerCase();
