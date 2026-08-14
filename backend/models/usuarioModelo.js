@@ -8,20 +8,23 @@ class UsuarioModelo {
     }
 
     getDatosParaGuardar(uidGenerado) {
-        return {
+        const datos = {
             perfil: {
-                nombre: this.username,
-                email: this.email
+                nombre: this.username || "",
+                email: this.email || ""
             },
-            tipoUsuario: this.tipoUsuario,
+            tipoUsuario: this.tipoUsuario || "cliente",
             resumen_financiero: {
                 saldo_actual: 0
             },
-            password: this.password,
-            salt: this.salt,
             uid: uidGenerado,
             fecha_registro: new Date().toISOString()
         };
+
+        if (this.password !== undefined) datos.password = this.password;
+        if (this.salt !== undefined) datos.salt = this.salt;
+
+        return datos;
     }
 }
 
