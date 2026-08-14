@@ -171,12 +171,18 @@ const RegisterPage = () => {
 
         <div className="rounded-xl border border-white/10 bg-black/25 p-4 space-y-3 mt-4">
           <div className="flex items-start gap-3">
-            <input id="data-prot" type="checkbox" checked={acceptData} onChange={e => setAcceptData(e.target.checked)} className="mt-1" required />
-            <label htmlFor="data-prot" className="text-sm text-gray-300"><span className="text-white font-medium">Acepto protección de datos</span></label>
+            <input id="data-prot" type="checkbox" checked={acceptData} onChange={e => setAcceptData(e.target.checked)} className="mt-1 accent-finix-orange" required />
+            <div className="flex-1">
+              <label htmlFor="data-prot" className="text-sm text-gray-300 cursor-pointer block"><span className="text-white font-medium">Acepto protección de datos</span></label>
+              <button type="button" onClick={() => openDoc('/politica_proteccion_datos.pdf')} className="text-xs text-finix-orange hover:text-orange-400 mt-1 flex items-center gap-1"><FileText size={12}/> Ver documento</button>
+            </div>
           </div>
           <div className="flex items-start gap-3">
-            <input id="priv-pol" type="checkbox" checked={acceptPrivacy} onChange={e => setAcceptPrivacy(e.target.checked)} className="mt-1" required />
-            <label htmlFor="priv-pol" className="text-sm text-gray-300"><span className="text-white font-medium">Acepto políticas de privacidad</span></label>
+            <input id="priv-pol" type="checkbox" checked={acceptPrivacy} onChange={e => setAcceptPrivacy(e.target.checked)} className="mt-1 accent-finix-orange" required />
+            <div className="flex-1">
+              <label htmlFor="priv-pol" className="text-sm text-gray-300 cursor-pointer block"><span className="text-white font-medium">Acepto políticas de privacidad</span></label>
+              <button type="button" onClick={() => openDoc('/Aviso_Privacidad_Finix.pdf')} className="text-xs text-finix-orange hover:text-orange-400 mt-1 flex items-center gap-1"><FileText size={12}/> Ver documento</button>
+            </div>
           </div>
         </div>
 
