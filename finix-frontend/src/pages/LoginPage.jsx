@@ -5,7 +5,7 @@ import { User, Lock, ArrowRight } from 'lucide-react';
 import AuthSplitLayout from '../components/layout/AuthSplitLayout';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { auth } from '../firebase/config';
+import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const LoginPage = () => {
