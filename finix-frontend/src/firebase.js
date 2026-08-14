@@ -3,7 +3,7 @@ import { getAuth } from "firebase/auth";
 
 // CREDENCIALES DE FIREBASE INYECTADAS
 const firebaseConfig = {
-  apiKey: "AIzaSyAS3rjfH48TpMWaWprC-J8_cApeQ01MyUM",
+  apiKey: "AIzaSyAS3rjfh48TpMWaWprC-J8_cApeQ01MyUM",
   authDomain: "finix-fa605.firebaseapp.com",
   projectId: "finix-fa605",
   storageBucket: "finix-fa605.firebasestorage.app",
