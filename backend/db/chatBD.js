@@ -69,7 +69,7 @@ const consultarAsesorIA = async (req, res) => {
         if (!snapshotMetas.empty) {
             metasTexto = snapshotMetas.docs.map(doc => {
                 const data = doc.data();
-                return `- Meta: ${data.name || 'Sin nombre'}, Objetivo: $${data.target || 0}, Ahorrado: $${data.saved || 0}`;
+                return `- Meta: ${data.name || 'Sin nombre'}, Objetivo: $${data.target || 0}, Ahorrado: $${data.current || 0}`;
             }).join('\n');
         }
 
