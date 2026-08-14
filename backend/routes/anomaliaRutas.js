@@ -3,7 +3,7 @@ const router = Router();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { db } = require("../db/db");
 const { usuarioAutorizado } = require("../middlewares/funcionesPassword");
-const { enviarCorreoAlertaAnomalia } = require("../libs/emailService");
+const { enviarCorreoAlertaAnomalia, enviarSMSAlerta } = require("../libs/emailService");
 require("dotenv").config();
 
 // Inicializar Google Generative AI
@@ -46,6 +46,7 @@ router.post("/anomalias/analizar", validarToken, async (req, res) => {
         const perfil = userData.perfil || userData;
         const nombreUsuario = perfil.nombre || perfil.username || "Usuario";
         const emailUsuario = perfil.email || userData.email || req.usuario.email;
+        const telefonoUsuario = userData.telefono || perfil.telefono;
 
         // 2. Obtener transacciones (de la petición o desde Firestore)
         let transacciones = req.body.transacciones;
@@ -126,15 +127,25 @@ Considera anomalías:
         }
 
         let resultadoEmail = { exito: false };
+        let resultadoSMS = { exito: false };
 
-        // 4. Si Gemini detecta anomalía, disparar correo de alerta vía Nodemailer
-        if (diagnosticoIA.hayAnomalia && emailUsuario) {
-            console.log(`🚨 Anomalía detectada para ${emailUsuario}. Enviando alerta por correo...`);
-            resultadoEmail = await enviarCorreoAlertaAnomalia({
-                emailDestino: emailUsuario,
-                nombreUsuario: nombreUsuario,
-                alerta: diagnosticoIA
-            });
+        // 4. Si Gemini detecta anomalía, disparar correo o SMS
+        if (diagnosticoIA.hayAnomalia) {
+            if (telefonoUsuario) {
+                console.log(`🚨 Anomalía detectada. Enviando alerta por SMS a ${telefonoUsuario}...`);
+                resultadoSMS = await enviarSMSAlerta({
+                    telefonoDestino: telefonoUsuario,
+                    nombreUsuario: nombreUsuario,
+                    alerta: diagnosticoIA
+                });
+            } else if (emailUsuario) {
+                console.log(`🚨 Anomalía detectada para ${emailUsuario}. Enviando alerta por correo...`);
+                resultadoEmail = await enviarCorreoAlertaAnomalia({
+                    emailDestino: emailUsuario,
+                    nombreUsuario: nombreUsuario,
+                    alerta: diagnosticoIA
+                });
+            }
         }
 
         return res.status(200).json({
@@ -142,6 +153,7 @@ Considera anomalías:
             hayAnomalia: diagnosticoIA.hayAnomalia,
             alerta: diagnosticoIA,
             emailEnviado: resultadoEmail.exito,
+            smsEnviado: resultadoSMS.exito,
             mensaje: diagnosticoIA.hayAnomalia 
                 ? "Anomalía detectada. Alerta procesada y notificada." 
                 : "No se detectaron anomalías en las transacciones analizadas."

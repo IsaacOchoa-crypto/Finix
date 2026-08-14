@@ -10,6 +10,7 @@ import LandingPage from './pages/LandingPage'; // Antes decía LoginPage aquí
 import LoginPage from './pages/LoginPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPassword from './pages/ForgotPassword';
 
 import DashboardPage from './pages/DashboardPage';
 import TransactionsPage from './pages/TransactionsPage';
@@ -24,14 +25,12 @@ import AdminSubscriptionsPage from './pages/AdminSubscriptionsPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
 
 import { Toaster } from 'sonner';
-import PrivacyNotice from './components/PrivacyNotice';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Toaster position="bottom-right" richColors theme="dark" />
-        <PrivacyNotice />
       
       <Routes>
         {/* Ruta Raíz */}
@@ -41,6 +40,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin-login" element={<AdminLoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* --- RUTAS PRIVADAS (USUARIO) --- */}
         <Route element={<MainLayout />}>

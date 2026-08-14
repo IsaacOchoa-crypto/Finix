@@ -2,8 +2,8 @@
 import axios from 'axios';
 
 const clienteAxios = axios.create({
-    // Usamos VITE_API_URL para producción, o localhost:3000 para desarrollo local
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api', 
+    // Agregamos el puerto :3000 que es donde escucha tu Express
+    baseURL: 'http://localhost:3000/api', 
     
     // ESTO ES IMPORTANTE:
     // Permite que las cookies (JWT) se envíen y reciban entre frontend y backend

@@ -1,77 +1,74 @@
-const crypto = require("crypto");
-const jwt = require("jsonwebtoken");
+const admin = require("firebase-admin");
 const { mensajes } = require("../libs/mensajes");
 
-// 🔥 CAMBIO CLAVE: Importamos la SECRET_KEY desde el archivo anterior
-const { SECRET_KEY } = require("../libs/jwt"); 
-
 // ==========================================
-// 1. FUNCIONES CRIPTOGRÁFICAS (Scrypt - Para que funcionen tus usuarios actuales)
+// INICIALIZACIÓN DE FIREBASE ADMIN
 // ==========================================
-function encriptarPassword(password) {
-    const salt = crypto.randomBytes(16).toString("hex");
-    const hash = crypto.scryptSync(password, salt, 10, 64, "sha512").toString("hex");
-    return { salt, hash };
-}
-
-function validarPassword(password, salt, hash) {
-    const hashEvaluar = crypto.scryptSync(password, salt, 10, 64, "sha512").toString("hex");
-    return hashEvaluar === hash;
+// Asegúrate de tener tu archivo serviceAccountKey.json o variables de entorno
+// Si usas las credenciales por defecto de AWS u otra nube:
+if (!admin.apps.length) {
+    admin.initializeApp(); // Esto requiere GOOGLE_APPLICATION_CREDENTIALS
 }
 
 // ==========================================
-// 2. MIDDLEWARE: USUARIO AUTORIZADO
+// 1. MIDDLEWARE: USUARIO AUTORIZADO
 // ==========================================
-function usuarioAutorizado(token, req) {
-    return new Promise((resolve) => {
-        // 1. Buscamos el token
-        if (!token) {
-            token = req.cookies?.token || (req.headers?.authorization ? req.headers.authorization.split(" ")[1] : null);
-        }
+async function usuarioAutorizado(token, req) {
+    // 1. Buscamos el token en cookies o headers
+    if (!token) {
+        token = req.cookies?.token || (req.headers?.authorization ? req.headers.authorization.split(" ")[1] : null);
+    }
 
-        if (!token) {
-            return resolve(mensajes(400, "No autorizado (Falta Token)"));
-        }
+    if (!token) {
+        return mensajes(400, "No autorizado (Falta Token)");
+    }
+
+    try {
+        // 2. Verificamos el token con Firebase Admin
+        const decodedToken = await admin.auth().verifyIdToken(token);
         
-        // 2. Verificamos que tengamos la clave maestra importada
-        if (!SECRET_KEY) {
-            console.error("🔴 ERROR: No se importó la SECRET_KEY en funcionesPassword.js");
-            return resolve(mensajes(500, "Error de servidor (Clave no encontrada)"));
-        }
-
-        // 3. Validamos usando la MISMA clave
-        jwt.verify(token, SECRET_KEY, (err, decoded) => {
-            if (err) {
-                console.log("❌ Token inválido:", err.message);
-                return resolve(mensajes(400, "Token inválido"));
-            }
-            req.usuario = decoded;
-            resolve(mensajes(200, "Autorizado"));
-        });
-    });
+        // Asignamos el decodedToken a req.usuario
+        // Firebase usa 'uid' como ID principal
+        req.usuario = {
+            ...decodedToken,
+            id: decodedToken.uid
+        };
+        
+        return mensajes(200, "Autorizado", "", req.usuario);
+    } catch (error) {
+        console.log("❌ Token de Firebase inválido:", error.message);
+        return mensajes(400, "Token inválido o expirado");
+    }
 }
 
 // ==========================================
-// 3. MIDDLEWARE: ADMIN AUTORIZADO
+// 2. MIDDLEWARE: ADMIN AUTORIZADO
 // ==========================================
 async function adminAutorizado(token, req) {
-    // 1. Validar que el token sea auténtico
     const auth = await usuarioAutorizado(token, req);
     if (auth.status !== 200) {
         return auth;
     }
 
-    // 2. Verificar Rol (Leemos el token, NO la base de datos)
-    const rol = req.usuario.tipoUsuario || req.usuario.rol || req.usuario.perfil?.tipoUsuario;
-    const rolLimpio = String(rol).toLowerCase().trim();
+    // Como Firebase no almacena roles por defecto en el token (a menos que uses custom claims),
+    // deberíamos buscar el usuario en Firestore para validar su rol.
+    try {
+        const { db } = require("../db/db");
+        const doc = await db.collection("usuarios").doc(req.usuario.uid).get();
+        if (!doc.exists) return mensajes(403, "Usuario no existe en DB");
 
-    console.log(`🛡️ Middleware Admin: Rol detectado -> '${rolLimpio}'`);
+        const data = doc.data();
+        const rol = data.tipoUsuario || data.perfil?.tipoUsuario || "cliente";
+        const rolLimpio = String(rol).toLowerCase().trim();
 
-    if (rolLimpio === "admin") {
-        return mensajes(200, "Admin Autorizado");
-    } else {
-        return mensajes(403, "Acceso denegado: Se requieren permisos de Administrador.");
+        if (rolLimpio === "admin" || rolLimpio === "administrador") {
+            return mensajes(200, "Admin Autorizado");
+        } else {
+            return mensajes(403, "Acceso denegado: Se requieren permisos de Administrador.");
+        }
+    } catch (err) {
+        return mensajes(500, "Error verificando administrador");
     }
 }
 
-module.exports = { encriptarPassword, validarPassword, usuarioAutorizado, adminAutorizado };
+module.exports = { usuarioAutorizado, adminAutorizado };
