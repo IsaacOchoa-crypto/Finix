@@ -43,7 +43,7 @@ const AiAgentPage = () => {
         const res = await api.post('/chat', { pregunta: text });
 
         // Extraemos la respuesta generada por OpenAI (GPT-3.5) desde tu controlador
-        const botResponse = res.data.datos || "He recibido la información, pero no pude procesar una respuesta en este momento.";
+        const botResponse = res.data.mensajeOriginal || res.data.datos || "He recibido la información, pero no pude procesar una respuesta en este momento.";
 
         // 3. Agregar la respuesta inteligente a la lista de mensajes
         setMessages(prev => [...prev, { 
