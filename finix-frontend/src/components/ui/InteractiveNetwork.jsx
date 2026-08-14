@@ -1,8 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, memo } from 'react';
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 
-const InteractiveNetwork = ({ themeColor }) => {
+const InteractiveNetwork = memo(({ themeColor }) => {
   // themeColor debe ser un código hex, ej: "#ff6b00" o "#dc2626"
 
   const particlesInit = useCallback(async engine => {
@@ -73,6 +73,6 @@ const InteractiveNetwork = ({ themeColor }) => {
       }}
     />
   );
-};
+});
 
 export default InteractiveNetwork;

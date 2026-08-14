@@ -11,7 +11,8 @@ import {
   createUserWithEmailAndPassword, 
   sendEmailVerification, 
   RecaptchaVerifier, 
-  signInWithPhoneNumber 
+  signInWithPhoneNumber,
+  signOut
 } from 'firebase/auth';
 
 const RegisterPage = () => {
@@ -72,7 +73,7 @@ const RegisterPage = () => {
       await saveUserToDB(userCredential.user.uid, email, "");
 
       toast.success('Cuenta creada. Revisa tu correo para verificar tu cuenta antes de iniciar sesión.', { duration: 6000 });
-      auth.signOut(); // Forzar a que inicien sesión de nuevo tras verificar
+      await signOut(auth); // Forzar a que inicien sesión de nuevo tras verificar
     } catch (error) {
       console.error(error);
       toast.error(error.message || 'Error al registrar con correo.');
