@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'https://localhost:5173', // Vite local secure URL
+    baseURL: 'https://finix-proyecto.duckdns.org', // Test against live AWS deployment
     ignoreHTTPSErrors: true, // Importante porque usamos un certificado self-signed local
     trace: 'on-first-retry',
   },

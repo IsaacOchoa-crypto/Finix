@@ -16,8 +16,8 @@ test.describe('Flujo de Autenticación', () => {
 
     // 3. Enviar el formulario
     // Interceptar la petición de red para simular la respuesta del backend
-    await page.route('**/api/auth/login', async route => {
-      const json = { token: 'fake-jwt-token', user: { id: 1, name: 'Test User' } };
+    await page.route('**/inicioSesion', async route => {
+      const json = { token: 'fake-jwt-token', usuario: 'Test User', rol: 'usuario' };
       await route.fulfill({ json, status: 200 });
     });
 

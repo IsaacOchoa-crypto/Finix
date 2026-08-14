@@ -8,6 +8,7 @@ const usuarioRutas = require('./routes/usuarioRutas');
 const categoriaRutas = require('./routes/categoriaRutas'); 
 const transaccionRutas = require('./routes/transaccionRutas'); 
 const metasRutas = require('./routes/metasRutas'); 
+const anomaliaRutas = require('./routes/anomaliaRutas');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,6 +45,7 @@ app.use('/api', usuarioRutas);
 app.use('/api', transaccionRutas);
 app.use('/api', categoriaRutas); 
 app.use('/api', metasRutas); 
+app.use('/api', anomaliaRutas); 
 
 app.get('/', (req, res) => {
     res.send('Backend Finix funcionando correctamente 🚀');

@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner'; 
 import TransactionModal from '../features/transactions/TransactionModal';
-import { Wallet, TrendingUp, TrendingDown, Plus, Bell, RefreshCw, User, LogOut } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Plus, Bell, RefreshCw, User, LogOut, ShieldAlert, Sparkles } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import TransactionIcon from '../components/ui/TransactionIcon';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
-// 1. IMPORTA EL COMPONENTE
+// Componentes UI de Finix
 import DotGrid from '../components/ui/DotGrid'; 
+import AnomalyAlertBanner from '../components/ui/AnomalyAlertBanner';
+import ExportButtons from '../components/ui/ExportButtons';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -17,20 +19,53 @@ const DashboardPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null); 
 
+  const [rawTransactions, setRawTransactions] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [financialSummary, setFinancialSummary] = useState({
     saldo: 0, ingresosMes: 0, gastosMes: 0
   });
 
+  // Estado para la alerta de anomalías (RF-07)
+  const [alertaAnomalia, setAlertaAnomalia] = useState(null);
+  const [emailEnviadoAlert, setEmailEnviadoAlert] = useState(false);
+  const [analyzingAnomalies, setAnalyzingAnomalies] = useState(false);
+
   const toggleMenu = (menu) => setActiveMenu(activeMenu === menu ? null : menu);
+
+  // Función para escanear anomalías usando el backend y Gemini AI (RF-07)
+  const handleCheckAnomalies = async (transactionsToAnalyze) => {
+    setAnalyzingAnomalies(true);
+    try {
+      const { data } = await api.post('/anomalias/analizar', { 
+        transacciones: transactionsToAnalyze || rawTransactions 
+      });
+
+      if (data.estado && data.hayAnomalia) {
+        setAlertaAnomalia(data.alerta);
+        setEmailEnviadoAlert(data.emailEnviado);
+        toast.warning('🚨 Anomalía financiera detectada por Finix AI', {
+          description: data.alerta?.titulo || 'Se identificó un patrón de riesgo en tus transacciones.'
+        });
+      } else {
+        setAlertaAnomalia(null);
+      }
+    } catch (error) {
+      console.error("Error al analizar anomalías:", error);
+    } finally {
+      setAnalyzingAnomalies(false);
+    }
+  };
 
   const fetchDashboardData = useCallback(async () => {
     setRefreshing(true);
     try {
       const { data } = await api.get('/transacciones');
       if (data.estado && Array.isArray(data.datos)) {
+        setRawTransactions(data.datos);
         processTransactions(data.datos);
+        // Disparar análisis de anomalías
+        handleCheckAnomalies(data.datos);
       }
     } catch (error) {
       console.error("Error Dashboard:", error);
@@ -91,12 +126,10 @@ const DashboardPage = () => {
     setChartData(last7Days);
   };
 
-  // --- CORRECCIÓN PRINCIPAL AQUÍ ---
   const handleSaveTransaction = async (formData) => {
     const montoNum = parseFloat(formData.amount);
     const categoria = formData.category || formData.categoria_nombre || "General";
     
-    // Validación local antes de enviar al backend
     if (isNaN(montoNum) || montoNum <= 0) {
       return toast.error("El monto debe ser mayor a 0.");
     }
@@ -118,7 +151,6 @@ const DashboardPage = () => {
         toast.error(response.data.mensaje || 'Error al guardar.');
       }
     } catch (error) {
-      // Capturamos el mensaje de error exacto que manda el backend en el status 400
       const mensajeError = error.response?.data?.mensaje || 'Error de red al guardar.';
       console.error("Detalle del error 400:", error.response?.data);
       toast.error(mensajeError);
@@ -145,49 +177,82 @@ const DashboardPage = () => {
       </div>
 
       {/* CONTENIDO PRINCIPAL */}
-      <div className="relative z-10 space-y-6 pb-10" onClick={() => activeMenu && setActiveMenu(null)}> 
+      <div className="relative z-10 space-y-6 pb-10 px-4 md:px-8 max-w-7xl mx-auto" onClick={() => activeMenu && setActiveMenu(null)}> 
         
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pt-4">
+        {/* HEADER Y ACCIONES */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 pt-6">
           <div>
             <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Resumen Financiero</h1>
-            <p className="text-gray-400 mt-1 flex items-center gap-2">Bienvenido de nuevo, Usuario <span className="animate-pulse">👋</span></p>
+            <p className="text-gray-400 mt-1 flex items-center gap-2">
+              Bienvenido de nuevo, Usuario <span className="animate-pulse">👋</span>
+            </p>
           </div>
 
-          <div className="flex items-center gap-4 relative" onClick={(e) => e.stopPropagation()}>
+          <div className="flex flex-wrap items-center gap-3 relative" onClick={(e) => e.stopPropagation()}>
+            {/* BOTONES DE EXPORTACIÓN (RF-08) */}
+            <ExportButtons 
+              targetContainerId="dashboard-report" 
+              transactions={rawTransactions} 
+              summary={financialSummary} 
+            />
+
+            {/* BOTÓN ESCANEAR ANOMALÍAS CON IA (RF-07) */}
+            <button
+              onClick={() => handleCheckAnomalies(rawTransactions)}
+              disabled={analyzingAnomalies}
+              title="Analizar riesgos financieros con Gemini AI"
+              className="p-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition flex items-center gap-2 text-sm font-semibold disabled:opacity-50"
+            >
+              <ShieldAlert size={18} className={analyzingAnomalies ? 'animate-bounce' : ''} />
+              <span className="hidden xl:inline">Auditar Riesgos</span>
+            </button>
+
             {/* NOTIFICACIONES */}
             <div className="relative">
               <button 
                 onClick={() => toggleMenu('notifications')}
                 className={`p-3 rounded-xl transition relative group ${activeMenu === 'notifications' ? 'bg-white/10 text-white' : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'}`}
               >
-                <div className="absolute top-3 right-3 w-2 h-2 bg-orange-500 rounded-full animate-pulse shadow-[0_0_10px_#ff6b00]"></div>
+                {alertaAnomalia && (
+                  <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]"></div>
+                )}
                 <Bell size={20} className={activeMenu === 'notifications' ? 'rotate-12' : 'group-hover:rotate-12 transition'}/>
               </button>
               {activeMenu === 'notifications' && (
                 <div className={dropdownStyle}>
                   <div className="p-4 border-b border-white/5 flex justify-between items-center">
                     <h3 className="font-bold text-white">Notificaciones</h3>
-                    <span className="text-xs bg-orange-500 text-black px-2 py-0.5 rounded-full font-bold">3 Nuevas</span>
+                    <span className="text-xs bg-orange-500 text-black px-2 py-0.5 rounded-full font-bold">
+                      {alertaAnomalia ? '1 Alerta AI' : 'Al Día'}
+                    </span>
                   </div>
-                  <div className="p-4 hover:bg-white/5 transition cursor-pointer">
-                      <p className="text-sm text-white font-medium">Sistema Conectado 🟢</p>
-                      <p className="text-xs text-gray-400 mt-1">Datos actualizados correctamente.</p>
-                  </div>
+                  {alertaAnomalia ? (
+                    <div className="p-4 bg-red-500/10 hover:bg-red-500/20 transition cursor-pointer border-b border-white/5">
+                      <p className="text-sm text-red-300 font-bold flex items-center gap-1.5">
+                        <ShieldAlert size={16} /> {alertaAnomalia.titulo || 'Anomalía de Riesgo'}
+                      </p>
+                      <p className="text-xs text-gray-300 mt-1 line-clamp-2">{alertaAnomalia.descripcion}</p>
+                    </div>
+                  ) : (
+                    <div className="p-4 hover:bg-white/5 transition cursor-pointer">
+                        <p className="text-sm text-white font-medium">Sistema Conectado 🟢</p>
+                        <p className="text-xs text-gray-400 mt-1">Sin anomalías detectadas en tus movimientos.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             {/* USER MENU */}
             <div className="relative">
-              <div onClick={() => toggleMenu('user')} className="flex items-center gap-3 pl-4 border-l border-white/10 cursor-pointer group">
+              <div onClick={() => toggleMenu('user')} className="flex items-center gap-3 pl-3 border-l border-white/10 cursor-pointer group">
                 <div className="text-right hidden md:block">
                   <p className="text-sm font-bold text-white group-hover:text-orange-500 transition">Mi Cuenta</p>
                   <p className="text-xs text-gray-500">Premium</p>
                 </div>
-                <div className={`w-11 h-11 rounded-full bg-gradient-to-tr from-orange-500 to-purple-600 p-[2px] transition ${activeMenu === 'user' ? 'shadow-[0_0_20px_rgba(255,107,0,0.6)] scale-105' : 'group-hover:shadow-[0_0_20px_rgba(255,107,0,0.4)]'}`}>
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-tr from-orange-500 to-purple-600 p-[2px] transition ${activeMenu === 'user' ? 'shadow-[0_0_20px_rgba(255,107,0,0.6)] scale-105' : 'group-hover:shadow-[0_0_20px_rgba(255,107,0,0.4)]'}`}>
                   <div className="w-full h-full rounded-full bg-gray-900 flex items-center justify-center">
-                      <User size={20} className="text-white" />
+                      <User size={18} className="text-white" />
                   </div>
                 </div>
               </div>
@@ -216,72 +281,90 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className={liquidCardStyle}>
-             <div className="flex justify-between mb-4"><div className="p-3 bg-blue-500/20 rounded-lg text-blue-400"><Wallet size={24} /></div></div>
-             <p className="text-gray-400 text-sm">Saldo Total</p>
-             <h3 className="text-3xl font-bold text-white">
-               {loading ? "..." : `$${financialSummary.saldo.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}
-             </h3>
-          </div>
-          <div className={liquidCardStyle}>
-             <div className="flex justify-between mb-4"><div className="p-3 bg-green-500/20 rounded-lg text-green-400"><TrendingUp size={24} /></div></div>
-             <p className="text-gray-400 text-sm">Ingresos Mes</p>
-             <h3 className="text-3xl font-bold text-white">
-               {loading ? "..." : `$${financialSummary.ingresosMes.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}
-             </h3>
-          </div>
-          <div className={liquidCardStyle}>
-             <div className="flex justify-between mb-4"><div className="p-3 bg-red-500/20 rounded-lg text-red-400"><TrendingDown size={24} /></div></div>
-             <p className="text-gray-400 text-sm">Gastos Mes</p>
-             <h3 className="text-3xl font-bold text-white">
-               {loading ? "..." : `$${financialSummary.gastosMes.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}
-             </h3>
-          </div>
-        </div>
+        {/* 🚨 BANNER DE ALERTA DE ANOMALÍAS DETECTADAS POR GEMINI AI (RF-07) */}
+        {alertaAnomalia && (
+          <AnomalyAlertBanner 
+            alerta={alertaAnomalia}
+            emailEnviado={emailEnviadoAlert}
+            onDismiss={() => setAlertaAnomalia(null)}
+          />
+        )}
 
-        {/* GRÁFICA Y LISTA */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           <div className="lg:col-span-2 bg-gray-900/60 backdrop-blur-md border border-white/10 p-6 rounded-2xl">
-              <h3 className="text-xl font-bold text-white mb-6">Gastos (Últimos 7 días)</h3>
-              <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                          <defs>
-                              <linearGradient id="colorMonto" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#FF6B00" stopOpacity={0.4}/><stop offset="95%" stopColor="#FF6B00" stopOpacity={0}/>
-                              </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                          <XAxis dataKey="name" stroke="#6B7280" />
-                          <YAxis stroke="#6B7280" />
-                          <Tooltip contentStyle={{backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px'}} itemStyle={{color: '#fff'}} formatter={(val) => `$${val}`} />
-                          <Area type="monotone" dataKey="monto" stroke="#FF6B00" strokeWidth={3} fill="url(#colorMonto)" />
-                      </AreaChart>
-                  </ResponsiveContainer>
-              </div>
-           </div>
+        {/* CONTENEDOR EXPORTABLE A PDF/EXCEL (RF-08) */}
+        <div id="dashboard-report" className="space-y-6 bg-slate-950/40 p-4 rounded-3xl border border-white/5">
+          
+          {/* TARJETAS RESUMEN */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className={liquidCardStyle}>
+               <div className="flex justify-between mb-4"><div className="p-3 bg-blue-500/20 rounded-lg text-blue-400"><Wallet size={24} /></div></div>
+               <p className="text-gray-400 text-sm">Saldo Total</p>
+               <h3 className="text-3xl font-bold text-white">
+                 {loading ? "..." : `$${financialSummary.saldo.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}
+               </h3>
+            </div>
+            <div className={liquidCardStyle}>
+               <div className="flex justify-between mb-4"><div className="p-3 bg-green-500/20 rounded-lg text-green-400"><TrendingUp size={24} /></div></div>
+               <p className="text-gray-400 text-sm">Ingresos Mes</p>
+               <h3 className="text-3xl font-bold text-white">
+                 {loading ? "..." : `$${financialSummary.ingresosMes.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}
+               </h3>
+            </div>
+            <div className={liquidCardStyle}>
+               <div className="flex justify-between mb-4"><div className="p-3 bg-red-500/20 rounded-lg text-red-400"><TrendingDown size={24} /></div></div>
+               <p className="text-gray-400 text-sm">Gastos Mes</p>
+               <h3 className="text-3xl font-bold text-white">
+                 {loading ? "..." : `$${financialSummary.gastosMes.toLocaleString('es-MX', {minimumFractionDigits: 2})}`}
+               </h3>
+            </div>
+          </div>
 
-           <div className="bg-gray-900/60 backdrop-blur-md border border-white/10 p-6 rounded-2xl">
-              <h3 className="text-xl font-bold text-white mb-6">Reciente</h3>
-              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                  {recentTransactions.length === 0 ? <p className="text-gray-500 text-center">Sin movimientos.</p> : recentTransactions.map((t, i) => (
-                      <div key={i} className="flex justify-between items-center p-3 hover:bg-white/5 rounded-xl transition">
-                          <div className="flex items-center gap-3">
-                              <TransactionIcon description={t.categoria_nombre} type={t.tipo} />
-                              <div>
-                                  <p className="font-semibold text-white capitalize">{t.categoria_nombre}</p>
-                                  <p className="text-xs text-gray-400">{t.fechaFormatted}</p>
-                              </div>
-                          </div>
-                          <span className={`font-bold ${t.tipo === 'ingreso' ? 'text-green-400' : 'text-red-400'}`}>
-                              {t.tipo === 'ingreso' ? '+' : '-'}${t.monto.toFixed(2)}
-                          </span>
-                      </div>
-                  ))}
-              </div>
-           </div>
+          {/* GRÁFICA Y MOVIMIENTOS RECIENTES */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             <div className="lg:col-span-2 bg-gray-900/60 backdrop-blur-md border border-white/10 p-6 rounded-2xl">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-white">Gastos (Últimos 7 días)</h3>
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <Sparkles size={14} className="text-orange-400" /> Proyección Finix
+                  </span>
+                </div>
+                <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                            <defs>
+                                <linearGradient id="colorMonto" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#FF6B00" stopOpacity={0.4}/><stop offset="95%" stopColor="#FF6B00" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis dataKey="name" stroke="#6B7280" />
+                            <YAxis stroke="#6B7280" />
+                            <Tooltip contentStyle={{backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px'}} itemStyle={{color: '#fff'}} formatter={(val) => `$${val}`} />
+                            <Area type="monotone" dataKey="monto" stroke="#FF6B00" strokeWidth={3} fill="url(#colorMonto)" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+             </div>
+
+             <div className="bg-gray-900/60 backdrop-blur-md border border-white/10 p-6 rounded-2xl">
+                <h3 className="text-xl font-bold text-white mb-6">Reciente</h3>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    {recentTransactions.length === 0 ? <p className="text-gray-500 text-center">Sin movimientos.</p> : recentTransactions.map((t, i) => (
+                        <div key={i} className="flex justify-between items-center p-3 hover:bg-white/5 rounded-xl transition">
+                            <div className="flex items-center gap-3">
+                                <TransactionIcon description={t.categoria_nombre} type={t.tipo} />
+                                <div>
+                                    <p className="font-semibold text-white capitalize">{t.categoria_nombre}</p>
+                                    <p className="text-xs text-gray-400">{t.fechaFormatted}</p>
+                                </div>
+                            </div>
+                            <span className={`font-bold ${t.tipo === 'ingreso' ? 'text-green-400' : 'text-red-400'}`}>
+                                {t.tipo === 'ingreso' ? '+' : '-'}${t.monto.toFixed(2)}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+             </div>
+          </div>
         </div>
 
         <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveTransaction} />

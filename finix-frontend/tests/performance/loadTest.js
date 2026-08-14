@@ -20,7 +20,7 @@ export const options = {
 };
 
 // Reemplazar esta URL con la IP de tu VPS en Hostinger/AWS o dejar localhost para prueba local
-const BASE_URL = __ENV.BASE_URL || 'https://localhost:5173';
+const BASE_URL = __ENV.BASE_URL || 'https://finix-proyecto.duckdns.org';
 
 export default function () {
   // Simular la carga de la página principal (Frontend)
