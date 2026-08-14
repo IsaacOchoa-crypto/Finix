@@ -32,8 +32,7 @@ const RegisterPage = () => {
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [showOTP, setShowOTP] = useState(false);
 
-  useEffect(() => {
-    // Inicializar Recaptcha
+  const initRecaptcha = () => {
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
@@ -42,7 +41,7 @@ const RegisterPage = () => {
         }
       });
     }
-  }, []);
+  };
 
   const openDoc = (url) => window.open(url, '_blank', 'noopener,noreferrer');
 
@@ -89,6 +88,7 @@ const RegisterPage = () => {
     
     setLoading(true);
     try {
+      initRecaptcha();
       const appVerifier = window.recaptchaVerifier;
       const result = await signInWithPhoneNumber(auth, phone, appVerifier);
       setConfirmationResult(result);
